@@ -1,5 +1,5 @@
 <div class="wrapper">
-  <div class="body">
+  <div *ngIf="!loading" class="body">
     <img
       class="logo"
       src="https://raw.githubusercontent.com/Manuel486/Store_Mega/main/images/logo.png"
@@ -14,6 +14,24 @@
           type="email"
         />
       </mat-form-field>
+      <p
+        *ngIf="
+          registrarUsuario.get('email')?.hasError('required') &&
+          registrarUsuario.get('email')?.touched
+        "
+        class="text-danger label-start"
+      >
+        El <strong>correo </strong>es requerido
+      </p>
+      <p
+        *ngIf="
+          registrarUsuario.get('email')?.hasError('email') &&
+          registrarUsuario.get('email')?.touched
+        "
+        class="text-danger label-start"
+      >
+        El <strong>formato </strong>es inválido
+      </p>
       <mat-form-field class="ancho" appearance="fill">
         <mat-label>Contraseña</mat-label>
         <input
@@ -23,6 +41,24 @@
           type="password"
         />
       </mat-form-field>
+      <p
+        *ngIf="
+          registrarUsuario.get('password')?.hasError('required') &&
+          registrarUsuario.get('password')?.touched
+        "
+        class="text-danger label-start"
+      >
+        La <strong>contraseña </strong>es requerida
+      </p>
+      <p
+        *ngIf="
+          registrarUsuario.get('password')?.hasError('minlength') &&
+          registrarUsuario.get('password')?.touched
+        "
+        class="text-danger label-start"
+      >
+        La <strong>contraseña </strong>debe tener al menos 6 caracteres
+      </p>
       <mat-form-field class="ancho" appearance="fill">
         <mat-label>Repetir contraseña</mat-label>
         <input
@@ -34,6 +70,7 @@
       </mat-form-field>
       <br />
       <button
+        [disabled]="registrarUsuario.invalid"
         class="ancho mb-3"
         mat-raised-button
         color="primary"
@@ -44,4 +81,5 @@
       <a class="letra-registro" routerLink="/login">Volver</a>
     </form>
   </div>
+  <app-spinner *ngIf="loading"></app-spinner>
 </div>

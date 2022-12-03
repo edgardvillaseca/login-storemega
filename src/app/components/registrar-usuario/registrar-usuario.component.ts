@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ToastrService } from 'ngx-toastr';
+import { Router } from '@angular/router';
+import { FirebaseCodeErrorService } from 'src/app/services/firebase-code-error.service';
 
 @Component({
   selector: 'app-registrar-usuario',
@@ -10,15 +12,18 @@ import { ToastrService } from 'ngx-toastr';
 })
 export class RegistrarUsuarioComponent implements OnInit {
   registrarUsuario: FormGroup;
+  loading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     private afAuth: AngularFireAuth,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private router: Router,
+    private fireBaseError: FirebaseCodeErrorService
   ) {
     this.registrarUsuario = this.fb.group({
-      email: ['', Validators.required],
-      password: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       repetirPassword: ['', Validators.required],
     });
   }
@@ -29,27 +34,30 @@ export class RegistrarUsuarioComponent implements OnInit {
     const password = this.registrarUsuario.value.password;
     const repetirPassword = this.registrarUsuario.value.repetirPassword;
 
+    if (password !== repetirPassword) {
+      this.toastr.error('Las contraseñas deben coincidir', 'Error');
+      return;
+    }
+
+    this.loading = true;
+
     this.afAuth
       .createUserWithEmailAndPassword(email, password)
-      .then((user) => {
-        console.log(user);
+      .then(() => {
+        this.verificarCorreo();
       })
       .catch((error) => {
-        console.log(error);
-        this.toastr.error(this.firebaseError(error.code), 'Error');
+        this.loading = false;
+        this.toastr.error(this.fireBaseError.codeError(error.code), 'Error');
       });
   }
 
-  firebaseError(code: string) {
-    switch (code) {
-      case 'auth/email-already-in-use':
-        return 'El usuario ya existe';
-      case 'auth/weak-password':
-        return 'La contrseña es muy débil';
-      case 'auth/invalid-email':
-        return 'Correo inválido';
-      default:
-        return 'Error desconocido';
-    }
+  verificarCorreo() {
+    this.afAuth.currentUser.then((user) =>
+      user?.sendEmailVerification().then(() => {
+        this.toastr.info('Confirme su correo electrónico', 'Verificar correo');
+        this.router.navigate(['/login']);
+      })
+    );
   }
 }
